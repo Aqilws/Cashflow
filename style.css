@@ -1,0 +1,22 @@
+body {
+    background-color: #252525;
+    color: #fff;
+}
+
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #1e1e1e;
+    position: fixed;
+    padding: 20px;
+}
+
+.content {
+    margin-left: 270px;
+    padding: 20px;
+}
+
+.card {
+    background: #1e1e1e;
+    color: #fff;
+}
