@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_transaction']))
     <link rel="stylesheet" href="style.css">
     <style>
         label{
-            margin-bottom: 5px;
+            margin-bottom: px;
             margin-top: 10px;
             font-weight: 500;
             font-size: 20px;
