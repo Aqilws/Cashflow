@@ -169,9 +169,11 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php while ($row = $result_transactions->fetch_assoc()) { ?>
+                                                <?php
+                                                $counter = 1;
+                                                while ($row = $result_transactions->fetch_assoc()) { ?>
                                                     <tr>
-                                                        <td class="p-4 font-semibold text-gray-600 ">1</td>
+                                                        <td class="p-4 font-semibold text-gray-600 "><?php echo $counter++ ?></td>
                                                         <td class="p-4">
                                                             <?php echo $row['category']; ?>
                                                         </td>

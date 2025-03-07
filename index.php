@@ -49,6 +49,37 @@
 				$day_index = (int)$row['day'] - 1;
 				$expenseData[$day_index] = (float)$row['total_expense'];
 			}
+
+
+
+
+
+			// Icome
+			$current_month_i = date('Y-m');
+			$days_in_month_i = date('t');
+
+			// Create an array of all days in the month
+			$days_i = range(1, $days_in_month_i);
+			$expenseData_i = array_fill(0, $days_in_month_i, 0);
+
+			// Get expense data for current month with actual dates
+			$result_chart_i = $conn->query("SELECT 
+			DATE_FORMAT(date, '%d') as day,
+			SUM(amount) as total_income
+			FROM transactions 
+			WHERE type='income' 
+			AND DATE_FORMAT(date, '%Y-%m') = '$current_month_i'
+			GROUP BY DATE(date)
+			ORDER BY date ASC");
+
+			while ($row_i = $result_chart_i->fetch_assoc()) {
+				$day_index_i = (int)$row_i['day'] - 1;
+				$expenseData_i[$day_index_i] = (float)$row_i['total_income'];
+			}
+
+
+
+
 			// Menangani input transaksi
 			if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_transaction'])) {
 				$type = $_POST['type'];
@@ -217,9 +248,11 @@
 													</tr>
 												</thead>
 												<tbody>
-													<?php while ($row = $result_transactions->fetch_assoc()) { ?>
+													<?php
+													$counter = 1;
+													while ($row = $result_transactions->fetch_assoc()) { ?>
 														<tr>
-															<td class="p-4 font-semibold text-gray-600 ">1</td>
+															<td class="p-4 font-semibold text-gray-600 "><?php echo $counter++; ?></td>
 															<td class="p-4">
 																<?php echo $row['category']; ?>
 															</td>
@@ -276,9 +309,16 @@
 
 	<script>
 		var options = {
+			// series: [{
+			// 	name: 'Pengeluaran',
+			// 	data: [<?php echo implode(',', $expenseData); ?>]
+			// }],
 			series: [{
 				name: 'Pengeluaran',
 				data: [<?php echo implode(',', $expenseData); ?>]
+			}, {
+				name: 'Pemasukan',
+				data: [<?php echo implode(',', $expenseData_i); ?>]
 			}],
 			chart: {
 				height: 350,
