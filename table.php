@@ -149,7 +149,7 @@
                             </form>
                             <div class="card h-full">
                                 <div class="card-body bg-slate-700">
-                                    <div class="flex justify-between w-screen bg-red-600" style="padding-right: 150px;">
+                                    <div class="flex justify-between w-screen bg-red-600" style="padding-right: 15`0px;">
 
                                         <h4 class="text-gray-600 text-lg font-semibold mb-6">Transaksi Terbaru</h4>
                                         <a href="add.php" class="btn btn-secondary" style="margin-top: 30px;">Tambah</a>

@@ -28,26 +28,27 @@
 				die("Koneksi gagal: " . $conn->connect_error);
 			}
 
+			$current_month = date('Y-m');
+			$days_in_month = date('t');
 
+			// Create an array of all days in the month
+			$days = range(1, $days_in_month);
+			$expenseData = array_fill(0, $days_in_month, 0);
 
+			// Get expense data for current month with actual dates
 			$result_chart = $conn->query("SELECT 
-				DATE_FORMAT(date, '%Y-%m') AS month, 
-				SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS total_income,
-				SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS total_expense
-				FROM transactions 
-				GROUP BY month 
-				ORDER BY month ASC");
-
-			$months = [];
-			$incomeData = [];
-			$expenseData = [];
+			DATE_FORMAT(date, '%d') as day,
+			SUM(amount) as total_expense
+			FROM transactions 
+			WHERE type='expense' 
+			AND DATE_FORMAT(date, '%Y-%m') = '$current_month'
+			GROUP BY DATE(date)
+			ORDER BY date ASC");
 
 			while ($row = $result_chart->fetch_assoc()) {
-				$months[] = $row['month'];
-				$incomeData[] = $row['total_income'];
-				$expenseData[] = $row['total_expense'];
+				$day_index = (int)$row['day'] - 1;
+				$expenseData[$day_index] = (float)$row['total_expense'];
 			}
-
 			// Menangani input transaksi
 			if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_transaction'])) {
 				$type = $_POST['type'];
@@ -85,7 +86,7 @@
 			// Mengambil data transaksi
 			$result_transactions = $conn->query("SELECT * FROM transactions ORDER BY date DESC");
 			?>
-			
+
 
 
 			<div class=" w-full page-wrapper overflow-hidden">
@@ -171,23 +172,23 @@
 								<div class="card-body">
 									<h4 class="text-gray-600 text-lg font-semibold mb-6">History Transaksi</h4>
 									<ul class="timeline-widget relative">
-									<?php while ($row = $result_transactions->fetch_assoc()) { ?>
-										<li class="timeline-item flex relative overflow-hidden min-h-[70px]">
-											<div class="timeline-time text-gray-600 text-sm min-w-[90px] py-[6px] pr-4 text-end">
-												9:30 am
-											</div>
-											<div class="timeline-badge-wrap flex flex-col items-center ">
-												<div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-blue-600 my-[10px]">
+										<?php while ($row = $result_transactions->fetch_assoc()) { ?>
+											<li class="timeline-item flex relative overflow-hidden min-h-[70px]">
+												<div class="timeline-time text-gray-600 text-sm min-w-[90px] py-[6px] pr-4 text-end">
+													9:30 am
 												</div>
-												<div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
-											</div>
-											<div class="timeline-desc py-[6px] px-4">
-												<p class="text-gray-600 text-lg font-normal"><?php echo $row['category']; ?></p>
-												<p class="text-gray-600 text-xs font-normal"><?php echo $row['date']; ?></p>
-											</div>
-										</li>
-										
-										
+												<div class="timeline-badge-wrap flex flex-col items-center ">
+													<div class="timeline-badge w-3 h-3 rounded-full shrink-0 bg-transparent border-2 border-blue-600 my-[10px]">
+													</div>
+													<div class="timeline-badge-border block h-full w-[1px] bg-gray-100"></div>
+												</div>
+												<div class="timeline-desc py-[6px] px-4">
+													<p class="text-gray-600 text-lg font-normal"><?php echo $row['category']; ?></p>
+													<p class="text-gray-600 text-xs font-normal"><?php echo $row['date']; ?></p>
+												</div>
+											</li>
+
+
 										<?php } ?>
 									</ul>
 								</div>
@@ -270,70 +271,85 @@
 	<script src="./assets/libs/@preline/dropdown/index.js"></script>
 	<script src="./assets/libs/@preline/overlay/index.js"></script>
 	<script src="./assets/js/sidebarmenu.js"></script>
-
-
-
 	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 
 	<script>
 		var options = {
-          series: [{
-          name: 'series1',
-          data: [<?php echo $income; ?>]
-        }, {
-          name: 'series2',
-          data: [<?php echo $expense; ?>]
-        }],
-          chart: {
-          height: 350,
-          type: 'area'
-        },
-        dataLabels: {
-          enabled: false
-        },
-        stroke: {
-          curve: 'smooth'
-        },
-        xaxis: {
-          type: 'datetime',
-          categories: ["2018-09-19T00:00:00.000Z", "2018-09-19T01:30:00.000Z", "2018-09-19T02:30:00.000Z", "2018-09-19T03:30:00.000Z", "2018-09-19T04:30:00.000Z", "2018-09-19T05:30:00.000Z", "2018-09-19T06:30:00.000Z"]
-        },
-        tooltip: {
-          x: {
-            format: 'dd/MM/yy HH:mm'
-          },
-        },
-        };
+			series: [{
+				name: 'Pengeluaran',
+				data: [<?php echo implode(',', $expenseData); ?>]
+			}],
+			chart: {
+				height: 350,
+				type: 'area' // Changed to bar for better visibility of daily transactions
+			},
+			dataLabels: {
+				enabled: false,
+				// formatter: function (val) {
+				//     return "Rp. " + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+				// }
+			},
+			fill: {
+				type: 'gradient',
+				gradient: {
+					shadeIntensity: 1,
+					inverseColors: false,
+					opacityFrom: 0.45,
+					opacityTo: 0.05,
+					stops: [20, 100, 100, 100]
+				},
+			},
+			stroke: {
+				curve: 'smooth'
+			},
+			xaxis: {
+				categories: [<?php echo implode(',', $days); ?>],
+				title: {
+					text: 'Tanggal'
+				}
+			},
+			yaxis: {
+				title: {
+					text: 'Jumlah (Rp)'
+				}
+			},
+			tooltip: {
+				y: {
+					formatter: function(val) {
+						return "Rp " + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+					}
+				}
+			}
+		};
 
-        var chart = new ApexCharts(document.querySelector("#chart1"), options);
-        chart.render();
+		var chart = new ApexCharts(document.querySelector("#chart1"), options);
+		chart.render();
 
 
 
 		var options = {
-          series: [<?php echo $income; ?>,<?php echo $expense; ?>],
-          chart: {
-          width: 380,
-          type: 'pie',
-        },
-        labels: ['Pemasukan','Pengeluaran'],
-        responsive: [{
-          breakpoint: 480,
-          options: {
-            chart: {
-              width: 200
-            },
-            legend: {
-              position: 'bottom'
-            }
-          }
-        }]
-        };
+			series: [<?php echo $income; ?>, <?php echo $expense; ?>],
+			chart: {
+				width: 380,
+				type: 'pie',
+			},
+			labels: ['Pemasukan', 'Pengeluaran'],
+			responsive: [{
+				breakpoint: 480,
+				options: {
+					chart: {
+						width: 200
+					},
+					legend: {
+						position: 'bottom'
+					}
+				}
+			}]
+		};
 
-        var chart = new ApexCharts(document.querySelector("#breakup1"), options);
-        chart.render();
-      
+		var chart = new ApexCharts(document.querySelector("#breakup1"), options);
+		chart.render();
 	</script>
 
 	<script src="./assets/js/dashboard.js"></script>
